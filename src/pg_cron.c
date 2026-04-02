@@ -528,9 +528,7 @@ PgCronLauncherMain(Datum arg)
 {
 	MemoryContext CronLoopContext = NULL;
 
-	#ifndef _WIN32
     struct rlimit limit;
-	#endif
 
 	/* Establish signal handlers before unblocking signals. */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
@@ -567,13 +565,12 @@ PgCronLauncherMain(Datum arg)
 		MaxRunningTasks = max_files_per_process;
 	}
 
-	#ifndef _WIN32
 	if (getrlimit(RLIMIT_NOFILE, &limit) != 0 &&
 		limit.rlim_cur < (uint32) MaxRunningTasks)
 	{
 		MaxRunningTasks = limit.rlim_cur;
 	}
-	#endif
+
 
 	if (UseBackgroundWorkers && max_worker_processes - 1 < MaxRunningTasks)
 	{
@@ -1513,7 +1510,7 @@ ManageCronTask(CronTask *task, TimestampTz currentTime)
 			task->lastStartTime = GetCurrentTimestamp();
 
 			if (CronLogRun)
-				UpdateJobRunDetail(task->runId, &pid, GetCronStatus(CRON_STATUS_RUNNING), NULL, &task->lastStartTime, NULL);
+				UpdateJobRunDetail(task->runId, (int32 *) &pid, GetCronStatus(CRON_STATUS_RUNNING), NULL, &task->lastStartTime, NULL);
 
 			task->state = CRON_TASK_BGW_RUNNING;
 			break;
@@ -1561,7 +1558,7 @@ ManageCronTask(CronTask *task, TimestampTz currentTime)
 
 				pid = (pid_t) PQbackendPID(connection);
 				if (CronLogRun)
-					UpdateJobRunDetail(task->runId, &pid, GetCronStatus(CRON_STATUS_SENDING), NULL, NULL, NULL);
+					UpdateJobRunDetail(task->runId, (int32 *) &pid, GetCronStatus(CRON_STATUS_SENDING), NULL, NULL, NULL);
 			}
 			else if (pollingStatus == PGRES_POLLING_FAILED)
 			{
