@@ -29,6 +29,13 @@
 /* reorder these #include's at your peril */
 
 #include <sys/types.h>
+
+#ifdef _WIN32
+typedef int uid_t;
+typedef int gid_t;
+typedef unsigned int uint;
+#endif
+
 #include <sys/param.h>
 
 #include <stdio.h>

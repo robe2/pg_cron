@@ -527,7 +527,10 @@ void
 PgCronLauncherMain(Datum arg)
 {
 	MemoryContext CronLoopContext = NULL;
-	struct rlimit limit;
+
+	#ifndef _WIN32
+    struct rlimit limit;
+	#endif
 
 	/* Establish signal handlers before unblocking signals. */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
@@ -564,11 +567,13 @@ PgCronLauncherMain(Datum arg)
 		MaxRunningTasks = max_files_per_process;
 	}
 
+	#ifndef _WIN32
 	if (getrlimit(RLIMIT_NOFILE, &limit) != 0 &&
 		limit.rlim_cur < (uint32) MaxRunningTasks)
 	{
 		MaxRunningTasks = limit.rlim_cur;
 	}
+	#endif
 
 	if (UseBackgroundWorkers && max_worker_processes - 1 < MaxRunningTasks)
 	{
